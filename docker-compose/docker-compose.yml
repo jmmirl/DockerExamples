@@ -10,7 +10,7 @@ services:
             - "--providers.docker=true"
             - "--entryPoints.web.address=:80"
             - "--entryPoints.websecure.address=:443"
-            - "--certificatesResolvers.le.acme.email=jason@mulreany.ie"
+            - "--certificatesResolvers.le.acme.email=someone@example.com"
             - "--certificatesResolvers.le.acme.storage=acme.json"
             - "--certificatesResolvers.le.acme.tlsChallenge=true"
             - "--certificatesResolvers.le.acme.httpChallenge=true"
@@ -41,7 +41,7 @@ services:
         networks:
             - web
         labels:
-          - traefik.http.routers.whoami.rule=Host(`mulreanycloud.com`)
+          - traefik.http.routers.whoami.rule=Host(`example.com`)
           - traefik.http.routers.whoami.tls=true
           - traefik.http.routers.whoami.tls.certresolver=le
     portainer:
@@ -54,7 +54,7 @@ services:
         networks:
             - web
         labels:
-          - traefik.http.routers.portainer.rule=Host(`portainer.mulreanycloud.com`)
+          - traefik.http.routers.portainer.rule=Host(`portainer.example.com`)
           - traefik.http.routers.portainer.tls=true
           - traefik.http.routers.portainer.tls.certresolver=le
           - traefik.http.services.portainer.loadbalancer.server.port=9000
