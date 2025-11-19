@@ -1,0 +1,77 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+
+    command:
+      - "--api.dashboard=true"                 # Enable dashboard
+      - "--api.debug=false"
+
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+
+      # Entrypoints (HTTP/HTTPS)
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+
+      # Redirect all HTTP → HTTPS
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+
+      # Let's Encrypt (Wildcard certificate via DNS challenge)
+      - "--certificatesresolvers.myresolver.acme.email=YOUR_EMAIL@example.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=route53"
+
+      # Ask for wildcard certificate
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.resolvers=1.1.1.1:53"
+      - "--entrypoints.websecure.http.tls.domains[0].main=YOURDOMAIN.com"
+      - "--entrypoints.websecure.http.tls.domains[0].sans=*.YOURDOMAIN.com"
+
+    environment:
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+    labels:
+      - "traefik.enable=true"
+
+      # ---------------------------------------
+      # SECURE TRAEFIK DASHBOARD
+      # ---------------------------------------
+      - "traefik.http.routers.traefik.rule=Host(`traefik.YOURDOMAIN.com`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.middlewares=traefik-auth"
+
+      # Basic Auth middleware
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=admin:$$apr1$$vW8aQ0X4$$9jqvMMn5h2tF1ivlHzCHo/"
+      # To generate your own password:
+      # echo $(htpasswd -nb admin MYPASSWORD)
+
+  # ---------------------------
+  # Example App (HTTPS)
+  # ---------------------------
+  myapp:
+    image: nginx:alpine
+    container_name: myapp
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.myapp.rule=Host(`app.YOURDOMAIN.com`)"
+      - "traefik.http.routers.myapp.entrypoints=websecure"
+      - "traefik.http.routers.myapp.tls.certresolver=myresolver"
+      - "traefik.http.services.myapp.loadbalancer.server.port=80"
