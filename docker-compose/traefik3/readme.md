@@ -7,14 +7,16 @@
 Everything is self-contained and ready to use.
 
 Directory structure
-project/
-│
-├── docker-compose.yml
-└── letsencrypt/
-    └── acme.json   (will be created automatically)
+
+project/  
+│  
+├── docker-compose.yml  
+└── letsencrypt/  
+    └── acme.json   (will be created automatically)  
 
 
-Prepare permissions
-mkdir letsencrypt
-touch letsencrypt/acme.json
-chmod 600 letsencrypt/acme.json
+Prepare permissions  
+
+mkdir letsencrypt  
+touch letsencrypt/acme.json  
+chmod 600 letsencrypt/acme.json  
